@@ -1,96 +1,90 @@
-from app.data.db import user_collection, token_collection
+from fastapi import HTTPException, Request
+from app.models.user_models import (
+    RegisterRequest, RegisterResponse,
+    LoginRequest, LoginResponse,
+    ForgetPasswordRequest, ResetPasswordRequest,
+    GeneralResponse
+)
+from app.data.db import user_collection
 from app.utils.password_utils import hash_password, verify_password
-from app.utils.jwt_utils import create_access_token
-from datetime import datetime, timedelta
-from fastapi import HTTPException
-import uuid
+from app.utils.jwt_utils import create_access_token,verify_token
+from app.utils.logger import logger
+from bson.objectid import ObjectId
 
+def register_user(request: RegisterRequest) -> RegisterResponse:
+    if user_collection.find_one({"username": request.username}):
+        logger.warning(f"User already exists: {request.username}")
+        raise HTTPException(status_code=400, detail="User already exists")
 
-def register_user(data):
-    existing_user = user_collection.find_one({"username": data.username})
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
+    hashed_password = hash_password(request.password)
 
-    hashed_pwd = hash_password(data.password)
-    user_doc = {
-        "username": data.username,
-        "password": hashed_pwd,
-        "first_name": data.first_name,
-        "last_name": data.last_name,
-        "address": data.address,
-        "created_at": datetime.utcnow()
+    user_data = {
+        "username": request.username,
+        "password": hashed_password,
+        "first_name": request.first_name,
+        "last_name": request.last_name,
+        "address": request.address,
     }
-    user_collection.insert_one(user_doc)
-    return {"message": "User registered successfully", "status": "success"}
 
+    user_collection.insert_one(user_data)
 
-def login_user(data):
-    user = user_collection.find_one({"username": data.username})
-    if not user or not verify_password(data.password, user["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token = create_access_token({"sub": request.username})
+    logger.info(f"User registered: {request.username}")
 
-    token_data = {"sub": data.username}
-    access_token = create_access_token(token_data)
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-def change_password(username, old_pwd, new_pwd):
-    user = user_collection.find_one({"username": username})
-    if not user or not verify_password(old_pwd, user["password"]):
-        raise HTTPException(status_code=400, detail="Invalid current password")
-
-    if verify_password(new_pwd, user["password"]):
-        raise HTTPException(status_code=400, detail="New password cannot be same as old password")
-
-    hashed_new = hash_password(new_pwd)
-    user_collection.update_one({"username": username}, {"$set": {"password": hashed_new}})
-    return {"message": "Password changed successfully", "status": "success"}
-
-
-def forget_password(username):
-    user = user_collection.find_one({"username": username})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    request_count = token_collection.count_documents({"username": username, "created_at": {"$gte": datetime.utcnow() - timedelta(hours=24)}})
-    if request_count >= 3:
-        raise HTTPException(status_code=429, detail="Too many reset requests. Try after 24 hours.")
-
-    token = str(uuid.uuid4())
-    token_collection.insert_one({
-        "username": username,
-        "token": token,
-        "created_at": datetime.utcnow()
-    })
-
-    # In production, send this via email.
-    return {"message": "Password reset token generated", "token": token, "status": "success"}
-
-
-def reset_password(token, new_password):
-    token_entry = token_collection.find_one({"token": token})
-    if not token_entry:
-        raise HTTPException(status_code=404, detail="Invalid token")
-
-    if datetime.utcnow() - token_entry["created_at"] > timedelta(hours=24):
-        raise HTTPException(status_code=410, detail="Token expired")
-
-    user_collection.update_one(
-        {"username": token_entry["username"]},
-        {"$set": {"password": hash_password(new_password)}}
+    return RegisterResponse(
+        message="Registration successful",
+        email_or_phone=request.username,
+        token=access_token
     )
 
-    token_collection.delete_one({"token": token})
-    return {"message": "Password reset successfully", "status": "success"}
+def login_user(request: LoginRequest) -> LoginResponse:
+    user = user_collection.find_one({"username": request.username})
+    if not user or not verify_password(request.password, user["password"]):
+        logger.warning(f"Invalid credentials for user: {request.username}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    access_token = create_access_token({"sub": request.username})
+    logger.info(f"User logged in: {request.username}")
 
+    return LoginResponse(
+        message="Login successful",
+        token=access_token
+    )
 
-def logout_user(token: str):
-    from app.data.db import token_collection
-    from datetime import datetime
+def forget_password(request: ForgetPasswordRequest) -> GeneralResponse:
+    user = user_collection.find_one({"username": request.username})
+    if not user:
+        logger.warning(f"User not found for forget password: {request.username}")
+        raise HTTPException(status_code=404, detail="User not found")
 
-    token_collection.insert_one({
-        "token": token,
-        "blacklisted_at": datetime.utcnow()
-    })
-    return {"message": "User logged out successfully"}
+    token = create_access_token({"sub": request.username})
+    logger.info(f"Password reset token generated for: {request.username}")
+
+    # In a real app, email or SMS this token.
+    return GeneralResponse(message=f"Reset token: {token}")
+
+def reset_password(request: ResetPasswordRequest) -> GeneralResponse:
+    payload = verify_token(request.token)
+    username = payload.get("sub")
+    if not username:
+        logger.warning("Invalid token used for password reset")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    hashed_new_pw = hash_password(request.new_password)
+
+    result = user_collection.update_one(
+        {"username": username},
+        {"$set": {"password": hashed_new_pw}}
+    )
+
+    if result.modified_count == 0:
+        logger.warning(f"Password reset failed for user: {username}")
+        raise HTTPException(status_code=400, detail="Password reset failed")
+
+    logger.info(f"Password reset successful for user: {username}")
+    return GeneralResponse(message="Password reset successful")
+
+def logout_user(request: Request) -> GeneralResponse:
+    # In real scenarios, you'd handle blacklisting the token or managing state
+    logger.info("User logged out.")
+    return GeneralResponse(message="Logout successful")

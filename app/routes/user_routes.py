@@ -1,12 +1,12 @@
 from fastapi import APIRouter,  Request
 from app.models.user_models import (
-    RegisterRequest, LoginRequest, ChangePasswordRequest,
+    RegisterRequest, LoginRequest, 
     ForgetPasswordRequest, ResetPasswordRequest,
     RegisterResponse,LoginResponse, GeneralResponse
     
 )
 from app.services.user_service import (
-    register_user, login_user, change_password,
+    register_user, login_user, 
     forget_password, reset_password, logout_user
 )
 
@@ -20,9 +20,7 @@ def register(request: RegisterRequest):
 def login(request: LoginRequest):
     return login_user(request)
 
-@router.post("/change-password", response_model=GeneralResponse)
-def change_pass(request: ChangePasswordRequest):
-    return change_password(request)
+
 
 @router.post("/forgot-password", response_model=GeneralResponse)
 def forgot_pass(request: ForgetPasswordRequest):

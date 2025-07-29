@@ -1,0 +1,41 @@
+2025-07-27 14:18:09,971 - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\svcs\anaconda3\envs\python3.12\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-27 14:42:51,711 - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\svcs\anaconda3\envs\python3.12\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-27 16:33:05,316 - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\svcs\anaconda3\envs\python3.12\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-27 16:33:05,998 - INFO - User registered: shiva
+2025-07-27 16:37:12,819 - WARNING - Invalid credentials for user: Vijay
+2025-07-27 16:37:37,242 - INFO - User logged in: shiva
+2025-07-27 16:39:41,365 - INFO - Password reset token generated for: shiva
+2025-07-27 17:15:00,198 - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\svcs\anaconda3\envs\python3.12\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-27 17:15:00,301 - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\svcs\anaconda3\envs\python3.12\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-07-27 17:15:00,959 - INFO - User registered: ramu
+2025-07-27 17:15:00,960 - INFO - User registered: ramu
+2025-07-27 17:15:29,912 - INFO - User logged in: ramu
+2025-07-27 17:15:42,768 - INFO - Password reset token generated for: ramu
+2025-07-27 17:22:32,409 - INFO - User logged out.
+2025-07-27 18:39:22,400 - INFO - Password reset token generated for: ramu
+2025-07-27 18:39:35,919 - INFO - User logged out.
