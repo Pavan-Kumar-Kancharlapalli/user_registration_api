@@ -2,7 +2,7 @@
 
 from pymongo import MongoClient
  
-mongo_url = "mongodb+srv://krkpavan22:nFvTiC2QVzjXYxrG@database.g2h69bg.mongodb.net/"
+mongo_url = "mongodb+srv://username:password@database.g2h69bg.mongodb.net/"
 db_name = "userdb"
 sampled_data = "users"
 tokens= "tokens"
